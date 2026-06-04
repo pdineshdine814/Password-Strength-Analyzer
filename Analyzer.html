@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Password Strength Analyzer</title>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #f4f6f9;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+    }
+
+    .container {
+        background: white;
+        padding: 25px;
+        width: 450px;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    h2 {
+        text-align: center;
+        color: #333;
+    }
+
+    input[type="password"] {
+        width: 100%;
+        padding: 10px;
+        margin-top: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 16px;
+    }
+
+    button {
+        width: 100%;
+        padding: 10px;
+        margin-top: 15px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+
+    button:hover {
+        background: #0056b3;
+    }
+
+    .result {
+        margin-top: 20px;
+    }
+
+    .weak {
+        color: red;
+        font-weight: bold;
+    }
+
+    .medium {
+        color: orange;
+        font-weight: bold;
+    }
+
+    .strong {
+        color: green;
+        font-weight: bold;
+    }
+
+    .verystrong {
+        color: darkgreen;
+        font-weight: bold;
+    }
+
+    ul {
+        margin-top: 10px;
+    }
+
+    .reuse {
+        color: crimson;
+        font-weight: bold;
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Password Strength Analyzer</h2>
+
+    <input type="password" id="password" placeholder="Enter Password">
+
+    <button onclick="analyzePassword()">Analyze Password</button>
+
+    <div class="result" id="result"></div>
+</div>
+
+<script>
+function analyzePassword() {
+
+    const password = document.getElementById("password").value;
+    const result = document.getElementById("result");
+
+    let score = 0;
+    let suggestions = [];
+
+    // Length Check
+    if(password.length >= 8){
+        score++;
+    } else {
+        suggestions.push("Use at least 8 characters.");
+    }
+
+    // Uppercase
+    if(/[A-Z]/.test(password)){
+        score++;
+    } else {
+        suggestions.push("Add uppercase letters.");
+    }
+
+    // Lowercase
+    if(/[a-z]/.test(password)){
+        score++;
+    } else {
+        suggestions.push("Add lowercase letters.");
+    }
+
+    // Numbers
+    if(/[0-9]/.test(password)){
+        score++;
+    } else {
+        suggestions.push("Add numbers.");
+    }
+
+    // Special Characters
+    if(/[!@#$%^&*(),.?":{}|<>]/.test(password)){
+        score++;
+    } else {
+        suggestions.push("Add special characters.");
+    }
+
+    // Long Password Bonus
+    if(password.length >= 12){
+        score++;
+    }
+
+    let strength = "";
+    let cssClass = "";
+
+    if(score <= 2){
+        strength = "Weak";
+        cssClass = "weak";
+    }
+    else if(score <= 4){
+        strength = "Medium";
+        cssClass = "medium";
+    }
+    else if(score === 5){
+        strength = "Strong";
+        cssClass = "strong";
+    }
+    else{
+        strength = "Very Strong";
+        cssClass = "verystrong";
+    }
+
+    // Password Reuse Check (Local Storage)
+    let oldPasswords = JSON.parse(localStorage.getItem("passwordHistory")) || [];
+
+    let reuseMessage = "";
+    if(oldPasswords.includes(password)){
+        reuseMessage =
+        "<p class='reuse'>⚠ Password has been used before. Choose a new password.</p>";
+    }
+
+    // Save New Password
+    if(password && !oldPasswords.includes(password)){
+        oldPasswords.push(password);
+
+        // Keep only last 5 passwords
+        if(oldPasswords.length > 5){
+            oldPasswords.shift();
+        }
+
+        localStorage.setItem(
+            "passwordHistory",
+            JSON.stringify(oldPasswords)
+        );
+    }
+
+    // Generate stronger suggestion
+    let strongSuggestion =
+        password +
+        "@" +
+        Math.floor(Math.random() * 9999);
+
+    result.innerHTML = `
+        <h3>Password Strength:
+            <span class="${cssClass}">${strength}</span>
+        </h3>
+
+        ${reuseMessage}
+
+        <p><strong>Security Analysis:</strong></p>
+
+        <ul>
+            <li>Length: ${password.length} characters</li>
+            <li>Uppercase: ${/[A-Z]/.test(password) ? "Yes" : "No"}</li>
+            <li>Lowercase: ${/[a-z]/.test(password) ? "Yes" : "No"}</li>
+            <li>Numbers: ${/[0-9]/.test(password) ? "Yes" : "No"}</li>
+            <li>Special Characters: ${
+                /[!@#$%^&*(),.?":{}|<>]/.test(password)
+                ? "Yes" : "No"
+            }</li>
+        </ul>
+
+        <p><strong>Suggestions:</strong></p>
+        <ul>
+            ${
+                suggestions.length
+                ? suggestions.map(item => `<li>${item}</li>`).join("")
+                : "<li>No improvements needed.</li>"
+            }
+        </ul>
+
+        <p>
+            <strong>Suggested Stronger Password:</strong><br>
+            ${strongSuggestion}
+        </p>
+    `;
+}
+</script>
+
+</body>
+</html>
